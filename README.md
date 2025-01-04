@@ -8,7 +8,6 @@ A retro-themed calendar application for Raspberry Pi, allowing event scheduling,
 - Event scheduling and display
 - Retro-themed UI
 - Real-time updates via WebSocket
-- Notifications via email
 - Import/export events in iCalendar format
 
 ## Setup
