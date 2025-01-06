@@ -1,17 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Calendar</title>
-    <link rel="stylesheet" href="/static/css/retro_theme.css">
-</head>
-<body>
-    <header>
-        <h1>Retro Calendar</h1>
-    </header>
-    <main>
-        {% block content %}{% endblock %}
-    </main>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Welcome to Retro Calendar</h2>
+<a href="/event_form" style="padding: 10px; background: #ff8800; color: white; border-radius: 5px; text-decoration: none;">Add New Event</a>
+<ul>
+    {% for event in events %}
+    <li style="margin: 10px 0; padding: 10px; background: #333; color: #ffcc00; border-radius: 5px;">
+        <strong>{{ event['title'] }}</strong><br>
+        <small>{{ event['start_time'] }} - {{ event['end_time'] }}</small><br>
+        <p>{{ event['description'] }}</p>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

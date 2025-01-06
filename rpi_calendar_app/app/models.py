@@ -20,8 +20,10 @@ def add_event(data):
     conn.commit()
     conn.close()
 
-def delete_event(event_id):
+def get_user_by_username(username):
     conn = get_db_connection()
-    conn.execute('DELETE FROM events WHERE id = ?', (event_id,))
-    conn.commit()
+    user = conn.execute(
+        'SELECT * FROM users WHERE username = ?', (username,)
+    ).fetchone()
     conn.close()
+    return user
