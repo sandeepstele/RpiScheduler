@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Admin Dashboard</h1>
+
+<h2>Add New Event</h2>
+<form method="POST">
+    <label for="title">Title:</label><br>
+    <input type="text" id="title" name="title" required style="width: 100%; font-size: 1.5rem;"><br><br>
+
+    <label for="description">Description:</label><br>
+    <textarea id="description" name="description" required style="width: 100%; font-size: 1.5rem;"></textarea><br><br>
+
+    <label for="start_time">Start Time:</label><br>
+    <input type="datetime-local" id="start_time" name="start_time" required style="width: 100%; font-size: 1.5rem;"><br><br>
+
+    <label for="end_time">End Time:</label><br>
+    <input type="datetime-local" id="end_time" name="end_time" required style="width: 100%; font-size: 1.5rem;"><br><br>
+
+    <label for="priority">Priority:</label><br>
+    <select id="priority" name="priority" style="width: 100%; font-size: 1.5rem;">
+        <option value="Urgent">Urgent</option>
+        <option value="Important">Important</option>
+        <option value="Not Urgent">Not Urgent</option>
+    </select><br><br>
+
+    <button type="submit">Add Event</button>
+</form>
+
+<h2>Existing Events</h2>
+<table style="width: 100%; font-size: 1.5rem; border-collapse: collapse;">
+    <tr>
+        <th>Title</th>
+        <th>Description</th>
+        <th>End Time</th>
+        <th>Actions</th>
+    </tr>
+    {% for event in events %}
+    <tr>
+        <td>{{ event.title }}</td>
+        <td>{{ event.description }}</td>
+        <td>{{ event.end_time }}</td>
+        <td>
+            <form method="POST" action="{{ url_for('main.modify_event', event_id=event.id) }}" style="display: inline;">
+                <button type="submit">Modify</button>
+            </form>
+            <form method="POST" action="{{ url_for('main.complete_event', event_id=event.id) }}" style="display: inline;">
+                <button type="submit">Complete</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

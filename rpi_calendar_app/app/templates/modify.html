@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Modify Event</h2>
+
+<form method="POST">
+    <label for="start_time">New Start Time:</label><br>
+    <input type="datetime-local" id="start_time" name="start_time" value="{{ event['start_time'] }}" required><br><br>
+
+    <label for="end_time">New End Time:</label><br>
+    <input type="datetime-local" id="end_time" name="end_time" value="{{ event['end_time'] }}" required><br><br>
+
+    <label for="priority">Priority:</label><br>
+    <select id="priority" name="priority" required>
+        <option value="Urgent" {% if event['priority'] == 'Urgent' %}selected{% endif %}>Urgent</option>
+        <option value="Important" {% if event['priority'] == 'Important' %}selected{% endif %}>Important</option>
+        <option value="Not Urgent" {% if event['priority'] == 'Not Urgent' %}selected{% endif %}>Not Urgent</option>
+    </select><br><br>
+
+    <button type="submit" style="padding: 10px; background: #007bff; color: white; border-radius: 5px;">Save Changes</button>
+</form>
+
+<a href="{{ url_for('main.admin_dashboard') }}" style="margin-top: 20px; display: block; color: #dc3545;">Cancel</a>
+{% endblock %}

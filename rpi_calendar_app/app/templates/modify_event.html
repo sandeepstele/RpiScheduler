@@ -1,0 +1,17 @@
+<form method="POST" action="/admin/modify/{{ event_id }}">
+    <label for="title">Title:</label>
+    <input type="text" id="title" name="title" required>
+    <label for="description">Description:</label>
+    <textarea id="description" name="description"></textarea>
+    <label for="start_time">Start Time:</label>
+    <input type="datetime-local" id="start_time" name="start_time" required>
+    <label for="end_time">End Time:</label>
+    <input type="datetime-local" id="end_time" name="end_time" required>
+    <label for="priority">Priority:</label>
+    <select id="priority" name="priority">
+        <option value="Urgent">Urgent</option>
+        <option value="Important">Important</option>
+        <option value="Not Urgent">Not Urgent</option>
+    </select>
+    <button type="submit">Modify Event</button>
+</form>

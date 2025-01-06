@@ -1,55 +1,119 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from werkzeug.security import check_password_hash
-from .models import get_events, add_event, get_user_by_username
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from .models import get_events, add_event, get_user, get_db_connection, categorize_events
 from functools import wraps
 
 main = Blueprint('main', __name__)
 
-@main.route('/')
-def index():
+# Decorator to restrict admin-only access
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('role') != 'admin':
+            flash("Access denied: Admins only", "danger")
+            return redirect(url_for('main.login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# Route to display events for Raspberry Pi
+@main.route('/display', methods=['GET'])
+def display_events():
+    sort_by = request.args.get('sort_by', 'date')  # Default sorting by date
+    categorized = categorize_events()
+
+    # Sort events by priority if requested
+    if sort_by == 'priority':
+        for key in ['today', 'tomorrow', 'future']:
+            categorized[key] = sorted(
+                categorized[key], 
+                key=lambda x: {'Urgent': 1, 'Important': 2, 'Not Urgent': 3}[x['priority']]
+            )
+
+    return render_template(
+        'display.html',
+        categorized=categorized,
+        sort_by=sort_by
+    )
+
+# Admin dashboard to add/edit events
+@main.route('/admin', methods=['GET', 'POST'])
+@admin_required
+def admin_dashboard():
+    if request.method == 'POST':
+        data = {
+            'title': request.form['title'],
+            'description': request.form['description'],
+            'start_time': request.form['start_time'],
+            'end_time': request.form['end_time'],
+            'priority': request.form['priority'],
+        }
+        add_event(data)
+        flash("Event added successfully!", "success")
+        return redirect(url_for('main.admin_dashboard'))
     events = get_events()
-    return render_template('index.html', events=events)
+    return render_template('admin.html', events=events)
 
-@main.route('/event_form')
-def event_form():
-    return render_template('event_form.html')
+# Modify event route
+@main.route('/admin/modify/<int:event_id>', methods=['GET', 'POST'])
+@admin_required
+def modify_event(event_id):
+    conn = get_db_connection()
+    event = conn.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
 
-@main.route('/events', methods=['POST'])
-def create_event():
-    data = {
-        'title': request.form['title'],
-        'description': request.form['description'],
-        'start_time': request.form['start_time'],
-        'end_time': request.form['end_time'],
-    }
-    add_event(data)
-    return redirect(url_for('main.index'))
+    if request.method == 'POST':
+        new_start_time = request.form['start_time']
+        new_end_time = request.form['end_time']
+        new_priority = request.form['priority']
+        conn.execute(
+            'UPDATE events SET start_time = ?, end_time = ?, priority = ? WHERE id = ?',
+            (new_start_time, new_end_time, new_priority, event_id)
+        )
+        conn.commit()
+        conn.close()
+        flash("Event modified successfully!", "success")
+        return redirect(url_for('main.admin_dashboard'))
 
+    conn.close()
+    return render_template('modify.html', event=event)
+
+# Mark event as completed
+@main.route('/admin/complete/<int:event_id>', methods=['POST'])
+@admin_required
+def complete_event(event_id):
+    conn = get_db_connection()
+    conn.execute('UPDATE events SET completed = 1 WHERE id = ?', (event_id,))
+    conn.commit()
+    conn.close()
+    flash("Event marked as completed!", "success")
+    return redirect(url_for('main.admin_dashboard'))
+
+# Login route
 @main.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
 
-        user = get_user_by_username(username)
-        if user and check_password_hash(user['password'], password):
-            session['user_id'] = user['id']
+        # Fetch user from the database
+        user = get_user(username)
+        if user and user['password'] == password:  # Replace with hashed password check in production
             session['role'] = user['role']
-            return redirect(url_for('main.index'))
+            flash("Logged in successfully!", "success")
+            return redirect(url_for('main.admin_dashboard'))
+        else:
+            flash("Invalid username or password", "danger")
+            return render_template('login.html')
 
-        flash('Invalid username or password')
-
+    # For GET requests, render the login page without any flash messages
     return render_template('login.html')
 
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if session.get('role') != 'admin':
-            return redirect(url_for('main.index'))
-        return f(*args, **kwargs)
-    return decorated_function
+# Logout route
+@main.route('/logout')
+def logout():
+    session.clear()
+    flash("Logged out successfully!", "success")
+    return redirect(url_for('main.login'))
 
-@main.route('/admin')
-@admin_required
-def admin_dashboard():
-    return render_template('admin_dashboard.html')
+# Index route
+@main.route('/')
+def index():
+    return redirect(url_for('main.display_events'))
