@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-from .models import get_events, add_event, get_user, get_db_connection, categorize_events
+from .models import get_events, add_event, get_user, get_db_connection, categorize_events, get_weather
 from functools import wraps
 
 main = Blueprint('main', __name__)
@@ -28,10 +28,14 @@ def display_events():
                 key=lambda x: {'Urgent': 1, 'Important': 2, 'Not Urgent': 3}[x['priority']]
             )
 
+    # Fetch weather data for Chennai
+    weather = get_weather()
+
     return render_template(
         'display.html',
         categorized=categorized,
-        sort_by=sort_by
+        sort_by=sort_by,
+        weather=weather  # Pass weather data to the template
     )
 
 # Admin dashboard to add/edit events
@@ -60,9 +64,15 @@ def modify_event(event_id):
     event = conn.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
 
     if request.method == 'POST':
-        new_start_time = request.form['start_time']
-        new_end_time = request.form['end_time']
-        new_priority = request.form['priority']
+        # Make sure these form fields are available in the POST request
+        new_start_time = request.form.get('start_time')  # Use .get() to avoid KeyError
+        new_end_time = request.form.get('end_time')
+        new_priority = request.form.get('priority')
+
+        if not new_start_time or not new_end_time or not new_priority:
+            flash("Please fill out all the fields.", "danger")
+            return redirect(url_for('main.modify_event', event_id=event_id))
+
         conn.execute(
             'UPDATE events SET start_time = ?, end_time = ?, priority = ? WHERE id = ?',
             (new_start_time, new_end_time, new_priority, event_id)
@@ -74,6 +84,7 @@ def modify_event(event_id):
 
     conn.close()
     return render_template('modify.html', event=event)
+
 
 # Mark event as completed
 @main.route('/admin/complete/<int:event_id>', methods=['POST'])
@@ -117,3 +128,14 @@ def logout():
 @main.route('/')
 def index():
     return redirect(url_for('main.display_events'))
+# Delete event route
+@main.route('/admin/delete/<int:event_id>', methods=['POST'])
+@admin_required
+def delete_event(event_id):
+    conn = get_db_connection()
+    conn.execute('DELETE FROM events WHERE id = ?', (event_id,))
+    conn.commit()
+    conn.close()
+    flash("Event deleted successfully!", "success")
+    return redirect(url_for('main.admin_dashboard'))
+

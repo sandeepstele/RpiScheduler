@@ -1,5 +1,9 @@
 import sqlite3
 from datetime import datetime, timedelta
+import requests
+from flask import Blueprint, render_template
+
+main = Blueprint('main', __name__)
 
 # Establish database connection using relative path
 def get_db_connection():
@@ -33,7 +37,6 @@ def get_user(username):
     return user
 
 # Categorize events by status and date
-
 def categorize_events():
     events = get_events()
     today = datetime.now().date()
@@ -66,3 +69,26 @@ def categorize_events():
         'tomorrow': sorted(tomorrow_events, key=lambda x: x['end_time']),
         'future': sorted(future_events, key=lambda x: x['end_time']),
     }
+
+def get_task_statistics():
+    conn = get_db_connection()
+    completed = conn.execute("SELECT COUNT(*) FROM events WHERE completed = 1").fetchone()[0]
+    pending = conn.execute("SELECT COUNT(*) FROM events WHERE completed = 0").fetchone()[0]
+    conn.close()
+    return {"completed": completed, "pending": pending}
+
+import requests
+
+def get_weather():
+    api_key = "213745ddc9d6130ff1335e7b92b93294"  # Replace with your actual API key
+    city = "Chennai"
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        return {
+            "temperature": data["main"]["temp"],
+            "description": data["weather"][0]["description"].capitalize(),
+            "icon": f"http://openweathermap.org/img/wn/{data['weather'][0]['icon']}@2x.png"
+        }
+    return None

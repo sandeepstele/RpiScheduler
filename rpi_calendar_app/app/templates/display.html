@@ -1,62 +1,168 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2 style="text-align: center; margin-bottom: 20px; color: #fff;">Event Display</h2>
+<head>
+    <meta http-equiv="refresh" content="60"> <!-- Refresh every 1 minute -->
+    <style>
+        body {
+            font-family: Arial, sans-serif; /* Changed font to Arial for better readability */
+            font-size: 1rem; /* Reduced font size */
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4; /* Light background color */
+        }
 
-<div style="text-align: center; margin-bottom: 20px;">
-    <a href="{{ url_for('main.display_events', sort_by='date') }}" 
-       style="padding: 10px; margin: 5px; background: {% if sort_by == 'date' %}#007bff{% else %}#ccc{% endif %}; 
-       color: white; text-decoration: none; border-radius: 5px;">
-        Sort by Date
-    </a>
-    <a href="{{ url_for('main.display_events', sort_by='priority') }}" 
-       style="padding: 10px; margin: 5px; background: {% if sort_by == 'priority' %}#007bff{% else %}#ccc{% endif %}; 
-       color: white; text-decoration: none; border-radius: 5px;">
-        Sort by Priority
-    </a>
+        h3 {
+            font-size: 1.2rem; /* Adjusted font size for headers */
+            margin-bottom: 15px;
+        }
+
+        .weather-widget p {
+            font-size: 0.9rem; /* Smaller font size for weather widget */
+        }
+
+        .task-card {
+            font-size: 0.9rem; /* Adjusted font size for task cards */
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .task-card h3 {
+            font-size: 1rem; /* Smaller title for task cards */
+        }
+
+        .task-card-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* Four columns layout for the tasks */
+            gap: 10px;
+            justify-items: center;
+            margin-bottom: 20px;
+        }
+
+        .task-card-completed {
+            text-decoration: line-through; /* Strike-through for completed tasks */
+        }
+
+        .weather-widget {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #3e8e41;
+            color: white;
+            border-radius: 10px;
+        }
+
+        .button {
+            padding: 10px;
+            margin: 5px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .button:hover {
+            background: #0056b3;
+        }
+
+        /* Task priority color styling */
+        .urgent { background-color: #dc3545; color: white; }
+        .important { background-color: #ffc107; color: black; }
+        .not-urgent { background-color: #28a745; color: white; }
+
+        /* Styling for each section (Overdue, Today, Tomorrow, Future) */
+        .section {
+            margin-bottom: 20px;
+            background: #212121; /* Dark background for the sections */
+            color: white; /* White text for visibility */
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .section h3 {
+            color: #dc3545;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+    </style>
+</head>
+
+<!-- Weather Widget -->
+<div class="weather-widget">
+    {% if weather %}
+        <h2>Weather in Chennai</h2>
+        <img src="{{ weather.icon }}" alt="Weather icon" style="width: 50px; height: 50px;">
+        <p>Temperature: {{ weather.temperature }}°C</p>
+        <p>Description: {{ weather.description }}</p>
+    {% else %}
+        <p>Weather data is currently unavailable.</p>
+    {% endif %}
 </div>
 
-<!-- Overdue Tasks -->
-<h3 style="color: #dc3545; text-align: left;">Overdue Tasks</h3>
-<div style="display: flex; flex-direction: column; margin-bottom: 20px;">
-    {% for event in categorized['overdue'] %}
-    <div style="margin: 10px 0; padding: 20px; background: #f8d7da; color: #721c24; border: 1px solid #721c24; border-radius: 10px;">
-        <h3>{{ event['title'] }}</h3>
-        <p><strong>Description:</strong> {{ event['description'] }}</p>
-        <p><strong>Time:</strong> {{ event['start_time'] }} - {{ event['end_time'] }}</p>
-        <p><strong>Priority:</strong> <span style="color: white; padding: 5px; background: 
-            {% if event['priority'] == 'Urgent' %}#dc3545{% 
-            elif event['priority'] == 'Important' %}#ffc107{% 
-            else %}#28a745{% endif %}; border-radius: 3px;">{{ event['priority'] }}</span></p>
-    </div>
-    {% endfor %}
-</div>
-
-<!-- Other Categories -->
-{% for category, events in categorized.items() %}
-    {% if category != 'overdue' %}
-    <h3 style="color: #fff; text-align: left;">{{ category.capitalize() }} Tasks</h3>
-    <div style="display: flex; flex-direction: column; margin-bottom: 20px;">
-        {% for event in events %}
-        <div style="margin: 10px 0; padding: 20px; background: 
-            {% if event['priority'] == 'Urgent' %}#f8d7da{% 
-            elif event['priority'] == 'Important' %}#fff3cd{% 
-            else %}#d4edda{% endif %}; 
-            color: 
-            {% if event['priority'] == 'Urgent' %}#721c24{% 
-            elif event['priority'] == 'Important' %}#856404{% 
-            else %}#155724{% endif %}; 
-            border: 1px solid #444; border-radius: 10px;">
+<!-- Task Categories Layout -->
+<div class="task-card-container">
+    <!-- Overdue Tasks -->
+    <div class="section">
+        <h3>Overdue Tasks</h3>
+        {% for event in categorized['overdue'] %}
+        <div class="task-card {{ 'task-card-completed' if event['completed'] == 1 else '' }}">
             <h3>{{ event['title'] }}</h3>
             <p><strong>Description:</strong> {{ event['description'] }}</p>
             <p><strong>Time:</strong> {{ event['start_time'] }} - {{ event['end_time'] }}</p>
-            <p><strong>Priority:</strong> <span style="color: white; padding: 5px; background: 
-                {% if event['priority'] == 'Urgent' %}#dc3545{% 
-                elif event['priority'] == 'Important' %}#ffc107{% 
-                else %}#28a745{% endif %}; border-radius: 3px;">{{ event['priority'] }}</span></p>
+            <p><strong>Priority:</strong> 
+                <span class="urgent">{{ event['priority'] }}</span>
+            </p>
         </div>
         {% endfor %}
     </div>
-    {% endif %}
-{% endfor %}
+
+    <!-- Today's Tasks -->
+    <div class="section">
+        <h3>Today's Tasks</h3>
+        {% for event in categorized['today'] %}
+        <div class="task-card {{ 'task-card-completed' if event['completed'] == 1 else '' }}">
+            <h3>{{ event['title'] }}</h3>
+            <p><strong>Description:</strong> {{ event['description'] }}</p>
+            <p><strong>Time:</strong> {{ event['start_time'] }} - {{ event['end_time'] }}</p>
+            <p><strong>Priority:</strong> 
+                <span class="important">{{ event['priority'] }}</span>
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Tomorrow's Tasks -->
+    <div class="section">
+        <h3>Tomorrow's Tasks</h3>
+        {% for event in categorized['tomorrow'] %}
+        <div class="task-card {{ 'task-card-completed' if event['completed'] == 1 else '' }}">
+            <h3>{{ event['title'] }}</h3>
+            <p><strong>Description:</strong> {{ event['description'] }}</p>
+            <p><strong>Time:</strong> {{ event['start_time'] }} - {{ event['end_time'] }}</p>
+            <p><strong>Priority:</strong> 
+                <span class="not-urgent">{{ event['priority'] }}</span>
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Future Tasks -->
+    <div class="section">
+        <h3>Future Tasks</h3>
+        {% for event in categorized['future'] %}
+        <div class="task-card {{ 'task-card-completed' if event['completed'] == 1 else '' }}">
+            <h3>{{ event['title'] }}</h3>
+            <p><strong>Description:</strong> {{ event['description'] }}</p>
+            <p><strong>Time:</strong> {{ event['start_time'] }} - {{ event['end_time'] }}</p>
+            <p><strong>Priority:</strong> 
+                <span class="urgent">{{ event['priority'] }}</span>
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
 {% endblock %}

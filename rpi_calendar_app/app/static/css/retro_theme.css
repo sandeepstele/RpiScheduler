@@ -71,3 +71,26 @@ input:focus, select:focus, textarea:focus {
     border: 2px solid #d2691e;
     background-color: #3b2f2f;
 }
+.weather-widget {
+    background-color: #2f2f2f;  /* Dark gray background */
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    margin-top: 20px;
+    color: white; /* White text color for better contrast */
+}
+
+.weather-widget img {
+    width: 60px;  /* Adjust the size of the weather icon */
+    height: 60px;
+}
+
+.weather-widget p {
+    margin: 10px 0;
+    font-size: 1.5em;  /* Slightly larger text for better readability */
+}
+
+.completed {
+    text-decoration: line-through;
+    color: gray;  /* Optional: makes the text look grayed out */
+}

@@ -1,51 +1,57 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Admin Dashboard</h1>
+<h1 style="text-align: center; color: #fff;">Admin Dashboard</h1>
 
-<h2>Add New Event</h2>
-<form method="POST">
-    <label for="title">Title:</label><br>
+<h2 style="color: #fff;">Add New Event</h2>
+<form method="POST" style="margin-bottom: 40px;">
+    <label for="title" style="font-size: 1.5rem;">Title:</label><br>
     <input type="text" id="title" name="title" required style="width: 100%; font-size: 1.5rem;"><br><br>
 
-    <label for="description">Description:</label><br>
+    <label for="description" style="font-size: 1.5rem;">Description:</label><br>
     <textarea id="description" name="description" required style="width: 100%; font-size: 1.5rem;"></textarea><br><br>
 
-    <label for="start_time">Start Time:</label><br>
+    <label for="start_time" style="font-size: 1.5rem;">Start Time:</label><br>
     <input type="datetime-local" id="start_time" name="start_time" required style="width: 100%; font-size: 1.5rem;"><br><br>
 
-    <label for="end_time">End Time:</label><br>
+    <label for="end_time" style="font-size: 1.5rem;">End Time:</label><br>
     <input type="datetime-local" id="end_time" name="end_time" required style="width: 100%; font-size: 1.5rem;"><br><br>
 
-    <label for="priority">Priority:</label><br>
+    <label for="priority" style="font-size: 1.5rem;">Priority:</label><br>
     <select id="priority" name="priority" style="width: 100%; font-size: 1.5rem;">
         <option value="Urgent">Urgent</option>
         <option value="Important">Important</option>
         <option value="Not Urgent">Not Urgent</option>
     </select><br><br>
 
-    <button type="submit">Add Event</button>
+    <button type="submit" style="background-color: #28a745; color: white; padding: 10px 20px; border: none; font-size: 1.5rem; cursor: pointer;">Add Event</button>
 </form>
 
-<h2>Existing Events</h2>
+<h2 style="color: #fff;">Existing Events</h2>
 <table style="width: 100%; font-size: 1.5rem; border-collapse: collapse;">
     <tr>
-        <th>Title</th>
-        <th>Description</th>
-        <th>End Time</th>
-        <th>Actions</th>
+        <th style="text-align: left; padding: 10px; background-color: #007bff; color: white;">Title</th>
+        <th style="text-align: left; padding: 10px; background-color: #007bff; color: white;">Description</th>
+        <th style="text-align: left; padding: 10px; background-color: #007bff; color: white;">End Time</th>
+        <th style="text-align: left; padding: 10px; background-color: #007bff; color: white;">Actions</th>
     </tr>
     {% for event in events %}
-    <tr>
-        <td>{{ event.title }}</td>
-        <td>{{ event.description }}</td>
-        <td>{{ event.end_time }}</td>
-        <td>
+    <tr style="border-bottom: 1px solid #ddd;">
+        <td style="padding: 10px;">{{ event.title }}</td>
+        <td style="padding: 10px;">{{ event.description }}</td>
+        <td style="padding: 10px;">{{ event.end_time }}</td>
+        <td style="padding: 10px;">
+            <!-- Modify Button -->
             <form method="POST" action="{{ url_for('main.modify_event', event_id=event.id) }}" style="display: inline;">
-                <button type="submit">Modify</button>
+                <button type="submit" style="background-color: #007bff; color: white; padding: 5px 10px; border: none; cursor: pointer;">Modify</button>
             </form>
+            <!-- Complete Button -->
             <form method="POST" action="{{ url_for('main.complete_event', event_id=event.id) }}" style="display: inline;">
-                <button type="submit">Complete</button>
+                <button type="submit" style="background-color: #ffc107; color: white; padding: 5px 10px; border: none; cursor: pointer;">Complete</button>
+            </form>
+            <!-- Delete Button -->
+            <form method="POST" action="{{ url_for('main.delete_event', event_id=event.id) }}" style="display: inline;">
+                <button type="submit" style="background-color: #dc3545; color: white; padding: 5px 10px; border: none; cursor: pointer;">Delete</button>
             </form>
         </td>
     </tr>

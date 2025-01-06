@@ -5,10 +5,12 @@
 
 <form method="POST">
     <label for="start_time">New Start Time:</label><br>
-    <input type="datetime-local" id="start_time" name="start_time" value="{{ event['start_time'] }}" required><br><br>
+    <!-- Ensure the start_time is in the correct datetime-local format -->
+    <input type="datetime-local" id="start_time" name="start_time" value="{{ event['start_time'][:16] }}" required><br><br>
 
     <label for="end_time">New End Time:</label><br>
-    <input type="datetime-local" id="end_time" name="end_time" value="{{ event['end_time'] }}" required><br><br>
+    <!-- Ensure the end_time is in the correct datetime-local format -->
+    <input type="datetime-local" id="end_time" name="end_time" value="{{ event['end_time'][:16] }}" required><br><br>
 
     <label for="priority">Priority:</label><br>
     <select id="priority" name="priority" required>
