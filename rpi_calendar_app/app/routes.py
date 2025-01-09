@@ -138,4 +138,18 @@ def delete_event(event_id):
     conn.close()
     flash("Event deleted successfully!", "success")
     return redirect(url_for('main.admin_dashboard'))
+from flask import render_template
+from .google_calendar import format_events_for_display
+from .models import categorize_events  # Assuming the categorize_events function is in models.py
+
+@main.route('/display', methods=['GET'])
+def display_events():
+    categorized = categorize_events()
+    google_events = format_events_for_display()  # Get events from Google Calendar
+
+    # Add Google Calendar events to the future category
+    for event in google_events:
+        categorized['future'].append(event)  # Append to the future tasks, for example
+
+    return render_template('display.html', categorized=categorized, google_events=google_events)
 
