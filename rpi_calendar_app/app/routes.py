@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from .models import get_events, add_event, get_user, get_db_connection, categorize_events, get_weather
+from .google_calendar import format_events_for_display  # Import the function to fetch Google Calendar events
 from functools import wraps
 
 main = Blueprint('main', __name__)
@@ -14,11 +15,21 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Route to display events for Raspberry Pi
+# Route to display events for Raspberry Pi (Updated to handle both tasks and Google Calendar events)
 @main.route('/display', methods=['GET'])
 def display_events():
     sort_by = request.args.get('sort_by', 'date')  # Default sorting by date
     categorized = categorize_events()
+
+    # Fetch weather data for Chennai
+    weather = get_weather()
+
+    # Get Google Calendar events
+    google_events = format_events_for_display()  # Get events from Google Calendar
+
+    # Add Google Calendar events to the future category
+    for event in google_events:
+        categorized['future'].append(event)  # Append to the future tasks, for example
 
     # Sort events by priority if requested
     if sort_by == 'priority':
@@ -28,14 +39,12 @@ def display_events():
                 key=lambda x: {'Urgent': 1, 'Important': 2, 'Not Urgent': 3}[x['priority']]
             )
 
-    # Fetch weather data for Chennai
-    weather = get_weather()
-
     return render_template(
         'display.html',
         categorized=categorized,
         sort_by=sort_by,
-        weather=weather  # Pass weather data to the template
+        weather=weather,  # Pass weather data to the template
+        google_events=google_events  # Pass Google Calendar events to the template
     )
 
 # Admin dashboard to add/edit events
@@ -85,7 +94,6 @@ def modify_event(event_id):
     conn.close()
     return render_template('modify.html', event=event)
 
-
 # Mark event as completed
 @main.route('/admin/complete/<int:event_id>', methods=['POST'])
 @admin_required
@@ -128,6 +136,7 @@ def logout():
 @main.route('/')
 def index():
     return redirect(url_for('main.display_events'))
+
 # Delete event route
 @main.route('/admin/delete/<int:event_id>', methods=['POST'])
 @admin_required
@@ -138,18 +147,3 @@ def delete_event(event_id):
     conn.close()
     flash("Event deleted successfully!", "success")
     return redirect(url_for('main.admin_dashboard'))
-from flask import render_template
-from .google_calendar import format_events_for_display
-from .models import categorize_events  # Assuming the categorize_events function is in models.py
-
-@main.route('/display', methods=['GET'])
-def display_events():
-    categorized = categorize_events()
-    google_events = format_events_for_display()  # Get events from Google Calendar
-
-    # Add Google Calendar events to the future category
-    for event in google_events:
-        categorized['future'].append(event)  # Append to the future tasks, for example
-
-    return render_template('display.html', categorized=categorized, google_events=google_events)
-
