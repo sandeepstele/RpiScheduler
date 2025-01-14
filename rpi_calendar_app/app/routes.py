@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from .models import get_events, add_event, get_user, get_db_connection, categorize_events, get_weather
 from .google_calendar import format_events_for_display  # Import the function to fetch Google Calendar events
 from functools import wraps
+from app.google_calendar import get_google_calendar_events, format_events_for_display
 
 main = Blueprint('main', __name__)
 
@@ -24,8 +25,9 @@ def display_events():
     # Fetch weather data for Chennai
     weather = get_weather()
 
-    # Get Google Calendar events
-    google_events = format_events_for_display()  # Get events from Google Calendar
+    # Fetch Google Calendar events
+    raw_google_events = get_google_calendar_events()  # Fetch events from Google Calendar
+    google_events = format_events_for_display(raw_google_events)  # Format the events
 
     # Add Google Calendar events to the future category
     for event in google_events:
@@ -35,7 +37,7 @@ def display_events():
     if sort_by == 'priority':
         for key in ['today', 'tomorrow', 'future']:
             categorized[key] = sorted(
-                categorized[key], 
+                categorized[key],
                 key=lambda x: {'Urgent': 1, 'Important': 2, 'Not Urgent': 3}[x['priority']]
             )
 
@@ -46,6 +48,7 @@ def display_events():
         weather=weather,  # Pass weather data to the template
         google_events=google_events  # Pass Google Calendar events to the template
     )
+
 
 # Admin dashboard to add/edit events
 @main.route('/admin', methods=['GET', 'POST'])
